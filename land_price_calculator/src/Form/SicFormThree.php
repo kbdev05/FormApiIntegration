@@ -1,0 +1,335 @@
+<?php
+/**
+ * @file
+ * Contains \Drupal\land_price_calculator\Form\SicFormThree.
+ */
+
+namespace Drupal\land_price_calculator\Form;
+
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Url;
+use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Ajax\CssCommand;
+use Drupal\Core\Ajax\PrependCommand;
+
+class SicFormThree extends FormBase
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormId()
+    {
+        return 'sic_form_three';
+    }
+    
+    public function getZoningNote($data)
+    {
+        $note = "Illawarra-Shoalhaven Special Infrastructure Contributions are only applied to residential zone land.";
+        return $note;
+    }
+    
+    public function filteredZones($data)
+    {
+        $zones = [];
+        if(!empty($data['zone_land_use']))
+        {
+            foreach($data['zone_land_use'] as $k=>$val)
+            {
+                $zone = explode("-",$val);
+                if(in_array($zone[0], array("R1","R2","R3","R4","R5","E4")))
+                {
+                    $zones[$zone[1]] = $val;
+                }
+            }
+        }
+        return $zones;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function buildForm(array $form, FormStateInterface $form_state, $data = null)
+    {
+        $form['#prefix'] = '<div id="sicformthree">';
+        $form['#suffix'] = '</div>';
+
+        $form['case_type'] = array(
+            '#type' => 'textfield',
+            // '#title' => t('Case Type'),
+            '#value' => 'SIC',
+            '#attributes' => ['hidden' => 'hidden'],
+        );
+
+        $form['region_name'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Region'),
+            '#default_value' => $data['region'],
+            '#placeholder' => t('Special Infrastructure Contributions Area'),
+            '#attributes' => ['readonly' => 'readonly'],
+        );
+        $form['fieldset12'] = array(
+            '#type' => 'webform_more',
+            '#attributes' => array(
+                'class' => array('spacing--bottom-l'),
+                ),
+            '#more_title' => 'Note',
+            '#more' => '<div class="webform-section"><p>SICs have been implemented in several areas in New South Wales for further information refer to the <a href="https://www.planning.nsw.gov.au/Plans-for-your-area/Infrastructure-funding/Special-Infrastructure-Contributions" target="_blank">SIC information page</a> .</p></div>',
+        );
+
+        $zones = $this->filteredZones($data);
+        
+        if (!empty($zones) && count($zones) > 1) {
+            $form['zone'] = array(
+                '#type' => 'select',
+                '#title' => t('Zoning : This site has multiple SIC payable zones.'),
+                '#placeholder' => t('Residential and Industrial Zoning'),
+                '#options' => $zones,
+            );
+            $form['fieldset1'] = array(
+                '#type' => 'webform_more',
+                '#attributes' => array(
+                    'class' => array('spacing--bottom-l'),
+                    ),
+                '#more_title' => 'Note',
+                '#more' => '<div class="webform-section"><p>'.$this->getZoningNote($data).'</p></div>',
+            );
+        } elseif (!empty($zones)) {
+            $form['zone'] = array(
+                '#type' => 'select',
+                '#title' => t('Zoning'),
+                '#placeholder' => t('Residential and Industrial Zoning'),
+                '#options' => $zones,
+             );
+            $form['fieldset1'] = array(
+                '#type' => 'webform_more',
+                '#attributes' => array(
+                    'class' => array('spacing--bottom-l'),
+                ),
+                '#more_title' => 'Note',
+                '#more' => '<div class="webform-section"><p>'.$this->getZoningNote($data).'</p></div>',
+            );
+        } else {
+            $form['zone'] = array(
+                '#type' => 'hidden',
+                '#title' => t('Zone.'),
+                '#default_value' => $zones,
+            );
+        }
+        
+        $form['precint'] = array(
+            '#type' => 'hidden',
+            '#title' => t('Precinct'),
+            '#default_value' => $data['presinct'],
+            '#attributes' => ['readonly' => 'readonly'],
+        );
+            
+        $form['subgrowth_area'] = array(
+            '#type' => 'select',
+            '#title' => t('Sub-growth Area'),
+            '#placeholder' => t('Sub-growth Area'),
+            '#options' => $data['subgrowth_area'],
+            '#attributes' => array(
+               'class' => array('spacing--bottom-l'),
+               ),
+         );
+         
+         $form['total_subgrowth_area'] = array(
+            '#type' => 'hidden',
+            '#title' => t('total_subgrowth_area'),
+            '#default_value' => count($data["subgrowth_area"]),
+            '#attributes' => ['readonly' => 'readonly'],
+        );
+         
+        if(count($data["subgrowth_area"]) > 1)
+        {
+            $form['help5'] = [
+              '#type' => 'item',
+              '#markup' => '<strong ><p class="spacing--top-m"><span class="icon icon--alert"></span><i>Note: This address has been identified within multiple sub-growth areas. And this system can only perform calculation for one sub growth area at a time. It is recommended to refer this assessment calculation to DPIE.</i></p></strong>',
+            ];
+        } 
+        
+        $form['request_source_system'] = array(
+            '#type' => 'textfield',
+            // '#title' => t('Request Source System'),
+            '#attributes' => ['hidden' => 'hidden'],
+            '#value' => 'Drupal',
+        );
+        
+        //if(!empty($zones) && count($data["subgrowth_area"]) == 1)
+        //{
+            $form['total_net_development_area'] = array(
+                '#type' => 'textfield',
+                '#description' => '<div class="net_development_area"></div>',
+                '#title' => t('Enter net development area (in hectares)'),
+                '#placeholder' => t('Enter Net Development Area (in hectares)'),
+                '#required' => true
+            );
+    
+            $form['fieldset'] = array(
+                '#type' => 'webform_more',
+                '#attributes' => array(
+                   'class' => array('spacing--bottom-l'),
+                   ),
+                '#more_title' => 'What is this ?',
+                '#more' => '<div class="webform-section"><p>A Net Development Area (NDA) is the area of land to which the development relates and is used to calculate the SIC charge. The NDA is generally the area of the development less any exemptions for schools, cemeteries, public recreation, public utilities etc. Further information can be found in the relevant Special Infrastructure Contributions Area Determination found in  <a href="https://www.planning.nsw.gov.au/Plans-for-your-area/Infrastructure-funding/Special-Infrastructure-Contributions" target="_blank">SIC information page</a> </p>
+                </div>',
+            );
+    
+            $form['actions']['confirm'] = [
+              '#type' => 'submit',
+               '#attributes' => array(
+                   'class' => array('spacing--top-m'),
+                   ),
+              '#value' => $this->t('Calculate the contribution'),
+              '#ajax' => [
+                'callback' => [$this, 'calculatePrice'],
+                'url' => Url::fromRoute('land_price_calculator.sick_form_three'),
+                'options' => [
+                  'query' => [
+                    FormBuilderInterface::AJAX_FORM_REQUEST => true,
+                  ],
+                ],
+              ],
+            ];
+        
+            $form['help2'] = [
+              '#type' => 'item',
+              '#markup' => '<strong ><p class="spacing--top-m"><span class="icon icon--alert"></span><i>The provided contribution value is an estimate only. To confirm the estimate a full assessment is required.</i></p></strong>',
+            ];
+            
+            $form['actions']['confirm']['#ajax']['options']['query'] += \Drupal::request()->query->all();
+        //}
+        
+        if(empty($zones))
+        {
+            //unset($form['total_net_development_area']);
+            $form['total_net_development_area']['#attributes']['disabled']  = 'disabled';
+            unset($form['fieldset']);
+            unset($form['help']);
+            unset($form['help2']);
+            //$form['actions']['confirm']['#access'] = FALSE;
+            $form['actions']['confirm']['#attributes']['disabled']  = 'disabled';
+        }
+        
+        if(empty($zones))
+        {
+            $form['help3'] = [
+              '#type' => 'item',
+              '#markup' => '<strong ><p class="spacing--top-m"><span class="icon icon--alert"></span><i>Illawarra-Shoalhaven Special Infrastructure Contributions only apply to residential zoned Land so no calculations are required.</i></p></strong>'
+            ];
+        }
+        /*if(count($data["subgrowth_area"]) > 1)
+        {
+            $form['help4'] = [
+              '#type' => 'item',
+              '#markup' => '<strong ><p class="spacing--top-m"><span class="icon icon--alert"></span><i>The entered lot falls over multiple sub-growth areas. This calculator does not support this situation and please contact <a href="mailto:SIContributions@planning.nsw.gov.au" title="mailto:SIContributions@planning.nsw.gov.au" data-renderer-mark="true">SIContributions@planning.nsw.gov.au</a> for assistance</i></p></strong>'
+            ];
+        }*/
+        
+        $form['#action'] = Url::fromRoute('land_price_calculator.sick_form_three')->toString();
+        $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
+    
+       return $form;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function submitForm(array &$form, FormStateInterface $form_state)
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function validateForm(array &$form, FormStateInterface $form_state)
+    {
+        if (!is_numeric($form_state->getValue('total_net_development_area')) || preg_match('/\.\d{5,}/', $form_state->getValue('total_net_development_area'))) {
+            $form_state->setErrorByName('total_net_development_area', $this->t('Please Enter a Valid Value.'));
+        }
+    }
+
+    public function calculatePrice(array &$form, FormStateInterface $form_state): AjaxResponse
+    {
+        $response = new AjaxResponse();
+        
+        if ($form_state->hasAnyErrors()) {
+            $status_messages = array('#type' => 'status_messages');
+            $messages = \Drupal::service('renderer')->renderRoot($status_messages);
+            
+            if (!empty($messages)) {
+                if (!$form_state->getValue('total_net_development_area') || !is_numeric($form_state->getValue('total_net_development_area')) || preg_match('/\.\d{5,}/', $form_state->getValue('total_net_development_area'))) 
+                {
+                    $css = ['border' => '2px solid red'];
+                    $message = $this->t('Please enter a valid value for Total net development Area.');
+                    $response->addCommand(new CssCommand('input[name="total_net_development_area"]', $css));
+                    $response->addCommand(new HtmlCommand('.net_development_area', $message));
+                    $response->addCommand(new CssCommand('.net_development_area',  ['color' => 'red']));
+                }
+                else
+                {
+                    $response->addCommand(new HtmlCommand('.net_development_area', ''));
+                    $response->addCommand(new CssCommand('input[name="total_net_development_area"]', ['border' => '2px solid #7f7f7f']));
+                }
+            }
+        } else {
+            
+            $datajson = [];
+            $datajson['CaseType'] = $form_state->getValue('case_type');
+            $datajson['RegionName'] = $form_state->getValue('region_name');
+            $datajson['Zone'] = $form_state->getValue('zone');
+            $datajson['Precinct'] = $form_state->getValue('subgrowth_area');
+            $datajson['TotalNetDevelopableArea'] = $form_state->getValue('total_net_development_area');
+            $datajson['RequestSourceSystem'] = $form_state->getValue('request_source_system');
+            $jsonData = json_encode($datajson);
+            // call price calculator service
+            $service = \Drupal::service('calculator_api');
+            $land_price_details = $service->rates($jsonData);
+            if (array_key_exists('ErrorDetails', $land_price_details)) {
+                $response->addCommand(new HtmlCommand('#sic-form-section', '<p><span class="icon icon--alert"></span>Please correct the following error in your details. '.$land_price_details['ErrorDetails']['ErrorDescription'].'</p>'));
+            } else {
+                $response->addCommand(new HtmlCommand('.user-sic-data', 'Your submitted data '.$this->user_sic_submission($datajson)));
+                $details = '<blockquote><h5><span class="icon icon--success"></span>'.$form_state->getValue('region_name').' Areas Special Infrastructure Contribution rate is $'.number_format($land_price_details['ContributionRate']).' per hectare of net developable area. 
+                </h5><h5><span class="icon icon--success"></span>The estimated contribution amount for the entered values is $'.number_format($land_price_details['ContributionAmount']).'. The estimate is based upon the figures entered.</h5> 
+                <p><span class="icon icon--alert"></span><i>This estimate is only for Special Infrastructure Contribution (SIC). Other local contributions may apply.</i></p>';
+                
+                if($form_state->getValue('subgrowth_area') == "West Dapto")
+                {
+                    $details .= '<p><span class="icon icon--alert"></span><i>Please be advised that development consents issued following biodiversity certification of the West Dapto Sub-growth Area will have an increase in the Special Infrastructure Contribution levy of 25.4% applied. Please see the <a href="https://www.planning.nsw.gov.au/Plans-for-your-area/Infrastructure-funding/Special-Infrastructure-Contributions/Illawarra-Shoalhaven-SIC">[ILSH|Illawarra Shoalhaven Special Infrastructure Contribution </a> SIC determination for further details</i></p>';
+                }
+                $details .= '<p>Notes:</p> <ul>';
+                if($form_state->getValue('total_subgrowth_area') > 1)
+                {
+                    $details .= '<li>Note: This address has been identified within multiple sub-growth areas. And this system can only perform calculation for one sub growth area at a time. It is recommended to refer this assessment calculation to DPIE.</li>';
+                }
+                $details .= '
+<li>This calculation is an estimate of a SIC contribution. The required contribution for any development will be subject to a detailed assessment carried out by the Department of Planning Industry and Environment via application on the SIC online service &nbsp;<a href="https://www.planningportal.nsw.gov.au/special-infrastructure-contributions-online-service">https://www.planningportal.nsw.gov.au/special-infrastructure-contributions-online-service</a></li>
+<li>As the contribution rate is indexed annually, the estimate is current till the end of this financial year, thereafter the contribution must be indexed.</li>
+
+</ul>
+<p>Please Note: This estimate only relates to a state level contribution there may be other contributions that are applicable to the development such local government contributions.</p>
+                
+                
+                </blockquote>  <a type="button" class="button--primary button--right icon--chevron-right-white" onClick="history.go(0)" >Start again </a>';
+                $response->addCommand(new HtmlCommand('#sic-form-section', $details));
+            }
+        }
+
+        return $response;
+    }
+
+    public function user_sic_submission($userdata)
+    {
+        $userhtml = '<ul>';
+        $userhtml .= '<li>Growth area : '.$userdata['Precinct'].'</li>';
+        // $userhtml .= '<li>Precinct : '.$userdata['Precinct'].'</li>';
+        $userhtml .= '<li>Total net developable area : '.$userdata['TotalNetDevelopableArea'].' hectares.</li>';
+
+        $userhtml .= '</ul>';
+
+        return $userhtml;
+    }
+}

@@ -1,0 +1,5 @@
+services:
+  calculator_api:
+    class: Drupal\land_price_calculator\CalculatorApi
+    arguments:
+      - "@http_client_factory"

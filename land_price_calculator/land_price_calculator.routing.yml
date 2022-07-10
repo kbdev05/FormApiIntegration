@@ -1,0 +1,28 @@
+land_price_calculator.autocomplete:
+  path: "/land_price_calculator/address_list"
+  defaults:
+    _controller: '\Drupal\land_price_calculator\Controller\AutocompleteController::handleAutocomplete'
+    _format: json
+  requirements:
+    _permission: "access content"
+
+land_price_calculator.sick_form_one:
+  path: "/land_price_calculator/sick/formone"
+  defaults:
+    _form: '\Drupal\land_price_calculator\Form\SicFormOne'
+  requirements:
+    _permission: "access content"
+
+land_price_calculator.sick_form_two:
+  path: "/land_price_calculator/sick/formtwo"
+  defaults:
+    _form: '\Drupal\land_price_calculator\Form\SicFormTwo'
+  requirements:
+    _permission: "access content"
+    
+land_price_calculator.sick_form_three:
+  path: "/land_price_calculator/sick/formthree"
+  defaults:
+    _form: '\Drupal\land_price_calculator\Form\SicFormThree'
+  requirements:
+    _permission: "access content"

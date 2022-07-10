@@ -1,0 +1,41 @@
+#sicformtwo,#sicformone {
+width:100%;
+}
+#drupal-modal{
+width:100%!important;
+background:#fff;
+}
+
+    
+
+ .ui-menu .ui-menu-item
+{
+        padding: 0.2rem;
+}
+ .ui-menu .ui-menu-item:hover
+{
+        background-color: #f4f4f7;
+}
+
+.ui-autocomplete-input
+{
+    margin-bottom: 0.7rem;
+}
+
+
+ ul.ui-autocomplete
+{
+    background-color: #fff !important;
+    border: 1px solid #666;
+}
+    
+.ui-menu .ui-menu-item-wrapper
+{
+    font-size: 85%;
+}
+
+/*.user-sic-data*/
+/*{*/
+/*    background-color:   #f4f4f7!important;*/
+/*    padding:2rem;*/
+/*}*/

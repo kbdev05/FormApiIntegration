@@ -1,0 +1,37 @@
+<?php
+
+function land_price_calculator_page_attachments_alter(&$page)
+{
+    $page['#attached']['library'][] = 'land_price_calculator/land_price_calculator';
+}
+
+function land_price_calculator_theme($existing, $type, $theme, $path)
+{
+    return [
+    'land_price_calculator' => [
+      'variables' => ['addressform' => []],
+    ],
+  ];
+}
+
+/**
+ * Implements template_preprocess_paragraph().
+ *
+ * @param array $variables
+ *                         An associative array containing:
+ *                         - elements: An array of elements to display in view mode.
+ *                         - paragraph: The paragraph object.
+ *                         - view_mode: View mode; e.g., 'full', 'teaser'...
+ */
+function land_price_calculator_preprocess_paragraph__sic_calculator(&$variables)
+{
+    $paragraph = $variables['paragraph'];
+    $show_calculator = $paragraph->field_show_calculator->getValue()[0]['value'];
+    if (true == $show_calculator) {
+        $custom_block = \Drupal::service('plugin.manager.block')->createInstance('land_price_calculator', []);
+        $is_admin = \Drupal::service('router.admin_context')->isAdminRoute();
+        if (!$is_admin) {
+            $variables['content'] = $custom_block->build();
+        }
+    }
+}

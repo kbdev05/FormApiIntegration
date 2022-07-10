@@ -1,0 +1,9 @@
+land_price_calculator:
+  version: 1.x
+  js:
+    js/land_price_calculator.js: {}
+  css:
+    theme:
+      css/land_price_calculator.css: {}
+  dependencies:
+    - core/jquery
